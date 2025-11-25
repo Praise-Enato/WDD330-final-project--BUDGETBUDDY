@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BudgetBuddy | Personal Finance Web App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/style.css">
+</head>
+<body class="theme-light">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">BB</div>
+        <div>
+          <p class="title">BudgetBuddy</p>
+          <p class="subtitle">Personal finance companion</p>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Main">
+        <button class="nav-link active" data-target="home">Home</button>
+        <button class="nav-link" data-target="add">Add Expense</button>
+        <button class="nav-link" data-target="dashboard">Dashboard</button>
+        <button class="nav-link" data-target="converter">Converter</button>
+        <button class="nav-link" data-target="settings">Settings</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="view active" data-view="home" aria-label="Home">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">Smart budgeting</p>
+            <h1>Stay on top of your spending with BudgetBuddy</h1>
+            <p class="lead">Track expenses, view summaries, convert currencies, and get quick financial tips without logging in.</p>
+            <div class="hero-actions">
+              <button class="button primary" data-target="add">Add expense</button>
+              <button class="button ghost" data-target="converter">Try converter</button>
+            </div>
+          </div>
+          <div class="summary-card">
+            <p class="eyebrow">This month</p>
+            <div class="stat-pair">
+              <div>
+                <p class="label">Budget</p>
+                <p class="stat" id="home-budget">--</p>
+              </div>
+              <div>
+                <p class="label">Spent</p>
+                <p class="stat" id="home-spent">--</p>
+              </div>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" id="home-progress"></div>
+            </div>
+            <p class="muted" id="home-remaining">Set a budget in Settings to start tracking.</p>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Recent expenses</p>
+                <h2>Latest activity</h2>
+              </div>
+              <button class="text-button" data-target="add">+ New</button>
+            </div>
+            <ul class="list" id="recent-expenses"></ul>
+            <p class="muted" id="recent-empty">No expenses yet. Add your first one!</p>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Quick tip</p>
+                <h2>Financial advice</h2>
+              </div>
+              <button class="text-button" id="advice-refresh">Refresh</button>
+            </div>
+            <p id="advice-text" class="advice">Tap refresh to load a tip.</p>
+            <p class="muted" id="advice-status"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-view="add" aria-label="Add expense">
+        <div class="card form-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Capture spending</p>
+              <h2>Add expense</h2>
+            </div>
+            <p class="muted">Saved locally to your browser</p>
+          </div>
+          <form id="expense-form" class="form-grid">
+            <label class="field">
+              <span>Amount</span>
+              <input type="number" id="expense-amount" min="0" step="0.01" required placeholder="0.00">
+            </label>
+            <label class="field">
+              <span>Category</span>
+              <select id="expense-category" required></select>
+            </label>
+            <label class="field">
+              <span>Description</span>
+              <input type="text" id="expense-description" maxlength="80" placeholder="Lunch with friends">
+            </label>
+            <label class="field">
+              <span>Date</span>
+              <input type="date" id="expense-date" required>
+            </label>
+            <button type="submit" class="button primary">Save expense</button>
+            <p class="muted" id="expense-status"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="view" data-view="dashboard" aria-label="Dashboard">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h2>Monthly dashboard</h2>
+            </div>
+            <p class="muted" id="dashboard-period"></p>
+          </div>
+          <div class="grid two">
+            <div class="stat-card">
+              <p class="label">Total spent</p>
+              <p class="stat" id="dash-spent">--</p>
+            </div>
+            <div class="stat-card">
+              <p class="label">Remaining budget</p>
+              <p class="stat" id="dash-remaining">--</p>
+            </div>
+          </div>
+          <div class="chart-placeholder">
+            <p class="muted">Spending charts coming soon.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">History</p>
+              <h2>All expenses</h2>
+            </div>
+            <button class="text-button" id="clear-data">Reset data</button>
+          </div>
+          <ul class="list" id="all-expenses"></ul>
+          <p class="muted" id="history-empty">No expenses recorded.</p>
+        </div>
+      </section>
+
+      <section class="view" data-view="converter" aria-label="Converter">
+        <div class="card form-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Live rates</p>
+              <h2>Currency converter</h2>
+            </div>
+            <p class="muted">Powered by ExchangeRate API</p>
+          </div>
+          <form id="converter-form" class="form-grid">
+            <label class="field">
+              <span>Amount</span>
+              <input type="number" id="convert-amount" min="0" step="0.01" required placeholder="100">
+            </label>
+            <label class="field">
+              <span>From</span>
+              <select id="convert-from"></select>
+            </label>
+            <label class="field">
+              <span>To</span>
+              <select id="convert-to"></select>
+            </label>
+            <button type="submit" class="button primary">Convert</button>
+            <p class="muted" id="convert-status"></p>
+          </form>
+          <div class="result" id="convert-result"></div>
+        </div>
+      </section>
+
+      <section class="view" data-view="settings" aria-label="Settings">
+        <div class="card form-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">Preferences</p>
+              <h2>Settings</h2>
+            </div>
+            <p class="muted">Your choices stay in this browser.</p>
+          </div>
+          <form id="settings-form" class="form-grid">
+            <label class="field">
+              <span>Monthly budget</span>
+              <input type="number" id="budget-input" min="0" step="0.01" placeholder="e.g. 500">
+            </label>
+            <label class="field toggle-field">
+              <span>Theme</span>
+              <div class="toggle">
+                <input type="checkbox" id="theme-toggle" aria-label="Toggle dark mode">
+                <span class="slider"></span>
+                <span class="toggle-label">Dark mode</span>
+              </div>
+            </label>
+            <button type="submit" class="button primary">Save settings</button>
+            <p class="muted" id="settings-status"></p>
+          </form>
+          <div class="card-foot">
+            <button class="button ghost" id="run-api-checks">Run API checks</button>
+            <p class="muted" id="api-check-status"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="scripts/app.js"></script>
+</body>
+</html>
