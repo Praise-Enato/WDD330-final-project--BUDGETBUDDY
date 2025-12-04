@@ -229,6 +229,25 @@ main {
   margin: 0;
 }
 
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.filter-field select {
+  min-width: 140px;
+}
+
 .list {
   list-style: none;
   padding: 0;
@@ -381,6 +400,27 @@ input:focus, select:focus {
   background: rgba(171, 235, 198, 0.12);
   border-radius: 14px;
   border: 1px solid var(--border);
+}
+
+.alert {
+  margin-top: 0.35rem;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.75rem;
+  box-shadow: var(--shadow);
 }
 
 .chart-placeholder {

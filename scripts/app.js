@@ -1,6 +1,6 @@
 import { loadData, saveData, resetData } from './storage.js';
 import { categories, formatCurrency, todayISO } from './utils.js';
-import { validateExpense, buildExpense, insertExpense, getRecentExpenses } from './expenseManager.js';
+import { validateExpense, buildExpense, insertExpense, getRecentExpenses, sumByMonth, totalsByCategory } from './expenseManager.js';
 import { setMonthlyBudget, budgetSnapshot } from './budgetManager.js';
 import { fetchRates, convertAmount, fetchAdvice } from './api.js';
 import { applyTheme, initThemeToggle } from './theme.js';
@@ -11,6 +11,9 @@ const state = {
   adviceStatus: 'idle',
   adviceError: '',
   ratesStatus: 'idle',
+  filters: {
+    category: 'all',
+  },
 };
 
 const FALLBACK_CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'NGN', 'JPY', 'AUD', 'CHF', 'CNY', 'INR'];
@@ -37,6 +40,8 @@ const selectors = {
   dashboardPeriod: document.getElementById('dashboard-period'),
   dashSpent: document.getElementById('dash-spent'),
   dashRemaining: document.getElementById('dash-remaining'),
+  budgetAlert: document.getElementById('budget-alert'),
+  filterCategory: document.getElementById('filter-category'),
   allExpenses: document.getElementById('all-expenses'),
   historyEmpty: document.getElementById('history-empty'),
   clearData: document.getElementById('clear-data'),
@@ -53,6 +58,11 @@ const selectors = {
   apiCheck: document.getElementById('run-api-checks'),
   apiCheckStatus: document.getElementById('api-check-status'),
   adviceRefresh: document.getElementById('advice-refresh'),
+};
+
+const charts = {
+  pie: null,
+  bar: null,
 };
 
 function isRatesFresh(cache) {
@@ -119,6 +129,14 @@ function switchView(viewName) {
   selectors.navLinks.forEach((link) => link.classList.toggle('active', link.dataset.target === viewName));
 }
 
+function renderFilterOptions() {
+  const options = ['all', ...categories];
+  selectors.filterCategory.innerHTML = options
+    .map((value) => `<option value="${value}">${value === 'all' ? 'All categories' : value}</option>`)
+    .join('');
+  selectors.filterCategory.value = state.filters.category;
+}
+
 function populateCategories() {
   selectors.expenseCategory.innerHTML = categories.map((cat) => `<option value="${cat}">${cat}</option>`).join('');
 }
@@ -140,6 +158,7 @@ function renderBudget() {
     ? formatCurrency(snapshot.remaining)
     : '—';
   selectors.dashRemaining.style.color = snapshot.overBudget ? 'var(--red)' : 'inherit';
+  selectors.budgetAlert.textContent = snapshot.overBudget ? 'Budget exceeded!' : '';
 }
 
 function renderRecent() {
@@ -160,11 +179,101 @@ function renderRecent() {
   });
 }
 
+function getFilteredExpenses() {
+  const sorted = [...state.data.expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (state.filters.category === 'all') return sorted;
+  return sorted.filter((item) => item.category === state.filters.category);
+}
+
+function getLastMonths(count = 6) {
+  const now = new Date();
+  const months = [];
+  for (let i = count - 1; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    months.push({ key, label: d.toLocaleDateString('en-US', { month: 'short' }) });
+  }
+  return months;
+}
+
+function ensureChart(key, ctx, config) {
+  if (!window.Chart || !ctx) return;
+  if (charts[key]) {
+    charts[key].destroy();
+  }
+  charts[key] = new Chart(ctx, config);
+}
+
+function renderCharts() {
+  if (!window.Chart) return;
+  const monthKey = budgetSnapshot(state.data).monthKey;
+  const totals = totalsByCategory(state.data.expenses, monthKey);
+  const labels = Object.keys(totals);
+  const values = Object.values(totals);
+
+  ensureChart(
+    'pie',
+    document.getElementById('category-pie'),
+    {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: ['#2e86c1', '#1a5276', '#abebc6', '#e74c3c', '#f2c94c', '#8e44ad'],
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom' },
+        },
+      },
+    }
+  );
+
+  const months = getLastMonths(6);
+  const barLabels = months.map((m) => m.label);
+  const barData = months.map((m) => sumByMonth(state.data.expenses, m.key));
+
+  ensureChart(
+    'bar',
+    document.getElementById('monthly-bar'),
+    {
+      type: 'bar',
+      data: {
+        labels: barLabels,
+        datasets: [
+          {
+            label: 'Total spent',
+            data: barData,
+            backgroundColor: '#2e86c1',
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true },
+        },
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    }
+  );
+}
+
 function renderHistory() {
-  const items = [...state.data.expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const items = getFilteredExpenses();
   selectors.allExpenses.innerHTML = '';
   if (!items.length) {
     selectors.historyEmpty.style.display = 'block';
+    selectors.historyEmpty.textContent =
+      state.filters.category === 'all'
+        ? 'No expenses recorded.'
+        : `No expenses in ${state.filters.category}.`;
     return;
   }
   selectors.historyEmpty.style.display = 'none';
@@ -205,6 +314,7 @@ function render() {
   renderHistory();
   renderAdvice();
   renderSettings();
+  renderCharts();
 }
 
 function handleExpenseSubmit(event) {
@@ -304,11 +414,16 @@ function attachEvents() {
     selectors.settingsForm.reset();
     selectors.expenseDate.value = todayISO();
     populateCategories();
+    renderFilterOptions();
     updateCurrencyOptions(buildCurrencyCodes(state.data.cache));
     applyTheme(state.data.settings.theme);
     render();
   });
   selectors.adviceRefresh.addEventListener('click', loadAdvice);
+  selectors.filterCategory.addEventListener('change', (event) => {
+    state.filters.category = event.target.value;
+    renderHistory();
+  });
 }
 
 function formatDate(value) {
@@ -325,6 +440,7 @@ function init() {
   });
   attachNavigation();
   populateCategories();
+  renderFilterOptions();
   updateCurrencyOptions(buildCurrencyCodes(state.data.cache), state.data.cache.ratesBase);
   ensureRatesAndOptions(state.data.cache?.ratesBase || 'USD').catch((err) => {
     selectors.convertStatus.textContent = `Rates unavailable: ${err.message}`;
