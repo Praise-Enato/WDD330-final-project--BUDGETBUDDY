@@ -70,7 +70,7 @@
               <button class="text-button" data-target="add">+ New</button>
             </div>
             <ul class="list" id="recent-expenses"></ul>
-            <p class="muted" id="recent-empty">No expenses yet. Add your first one!</p>
+            <p class="muted" id="recent-empty" role="status" aria-live="polite">No expenses yet. Add your first one!</p>
           </div>
 
           <div class="card">
@@ -82,7 +82,7 @@
               <button class="text-button" id="advice-refresh">Refresh</button>
             </div>
             <p id="advice-text" class="advice">Tap refresh to load a tip.</p>
-            <p class="muted" id="advice-status"></p>
+            <p class="muted" id="advice-status" role="status" aria-live="polite"></p>
           </div>
         </div>
       </section>
@@ -114,7 +114,7 @@
               <input type="date" id="expense-date" required>
             </label>
             <button type="submit" class="button primary">Save expense</button>
-            <p class="muted" id="expense-status"></p>
+            <p class="muted" id="expense-status" role="status" aria-live="polite"></p>
           </form>
         </div>
       </section>
@@ -142,7 +142,7 @@
             <div class="stat-card">
               <p class="label">Remaining budget</p>
               <p class="stat" id="dash-remaining">--</p>
-              <p class="alert" id="budget-alert" aria-live="polite"></p>
+              <p class="alert" id="budget-alert" aria-live="polite" role="status"></p>
             </div>
           </div>
           <div class="chart-grid">
@@ -151,12 +151,14 @@
                 <h3>Spend by category (pie)</h3>
               </div>
               <canvas id="category-pie" height="220"></canvas>
+              <p class="muted chart-status" id="pie-status" role="status" aria-live="polite"></p>
             </div>
             <div class="chart-card">
               <div class="card-head">
                 <h3>Monthly totals (bar)</h3>
               </div>
               <canvas id="monthly-bar" height="220"></canvas>
+              <p class="muted chart-status" id="bar-status" role="status" aria-live="polite"></p>
             </div>
           </div>
         </div>
@@ -170,7 +172,7 @@
             <button class="text-button" id="clear-data">Reset data</button>
           </div>
           <ul class="list" id="all-expenses"></ul>
-          <p class="muted" id="history-empty">No expenses recorded.</p>
+          <p class="muted" id="history-empty" role="status" aria-live="polite">No expenses recorded.</p>
         </div>
       </section>
 
@@ -197,7 +199,7 @@
               <select id="convert-to"></select>
             </label>
             <button type="submit" class="button primary">Convert</button>
-            <p class="muted" id="convert-status"></p>
+            <p class="muted" id="convert-status" role="status" aria-live="polite"></p>
           </form>
           <div class="result" id="convert-result"></div>
         </div>
@@ -226,11 +228,11 @@
               </div>
             </label>
             <button type="submit" class="button primary">Save settings</button>
-            <p class="muted" id="settings-status"></p>
+            <p class="muted" id="settings-status" role="status" aria-live="polite"></p>
           </form>
           <div class="card-foot">
             <button class="button ghost" id="run-api-checks">Run API checks</button>
-            <p class="muted" id="api-check-status"></p>
+            <p class="muted" id="api-check-status" role="status" aria-live="polite"></p>
           </div>
         </div>
       </section>

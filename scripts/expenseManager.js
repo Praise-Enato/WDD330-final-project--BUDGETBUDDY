@@ -40,6 +40,13 @@ export function insertExpense(data, expense) {
   };
 }
 
+export function deleteExpense(data, expenseId) {
+  return {
+    ...data,
+    expenses: (data.expenses || []).filter((item) => item.id !== expenseId),
+  };
+}
+
 export function getRecentExpenses(expenses = [], limit = 5) {
   return [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
 }

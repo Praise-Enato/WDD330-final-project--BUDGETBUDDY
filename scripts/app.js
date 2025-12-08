@@ -1,6 +1,6 @@
 import { loadData, saveData, resetData } from './storage.js';
 import { categories, formatCurrency, todayISO } from './utils.js';
-import { validateExpense, buildExpense, insertExpense, getRecentExpenses, sumByMonth, totalsByCategory } from './expenseManager.js';
+import { validateExpense, buildExpense, insertExpense, getRecentExpenses, sumByMonth, totalsByCategory, deleteExpense } from './expenseManager.js';
 import { setMonthlyBudget, budgetSnapshot } from './budgetManager.js';
 import { fetchRates, convertAmount, fetchAdvice } from './api.js';
 import { applyTheme, initThemeToggle } from './theme.js';
@@ -45,6 +45,8 @@ const selectors = {
   allExpenses: document.getElementById('all-expenses'),
   historyEmpty: document.getElementById('history-empty'),
   clearData: document.getElementById('clear-data'),
+  pieStatus: document.getElementById('pie-status'),
+  barStatus: document.getElementById('bar-status'),
   converterForm: document.getElementById('converter-form'),
   convertAmount: document.getElementById('convert-amount'),
   convertFrom: document.getElementById('convert-from'),
@@ -171,7 +173,7 @@ function renderRecent() {
   selectors.recentEmpty.style.display = 'none';
   items.forEach((item) => {
     const li = document.createElement('li');
-    li.className = 'list-item';
+    li.className = 'list-item fade-in';
     li.innerHTML = `<div><strong>${item.description || item.category}</strong><div class="meta">${formatDate(item.date)} • ${
       item.category
     }</div></div><div>${formatCurrency(item.amount)}</div>`;
@@ -205,64 +207,90 @@ function ensureChart(key, ctx, config) {
 }
 
 function renderCharts() {
-  if (!window.Chart) return;
+  if (!window.Chart) {
+    selectors.pieStatus.textContent = 'Charts unavailable (Chart.js not loaded).';
+    selectors.barStatus.textContent = 'Charts unavailable (Chart.js not loaded).';
+    return;
+  }
   const monthKey = budgetSnapshot(state.data).monthKey;
   const totals = totalsByCategory(state.data.expenses, monthKey);
   const labels = Object.keys(totals);
   const values = Object.values(totals);
 
-  ensureChart(
-    'pie',
-    document.getElementById('category-pie'),
-    {
-      type: 'pie',
-      data: {
-        labels,
-        datasets: [
-          {
-            data: values,
-            backgroundColor: ['#2e86c1', '#1a5276', '#abebc6', '#e74c3c', '#f2c94c', '#8e44ad'],
-          },
-        ],
-      },
-      options: {
-        plugins: {
-          legend: { position: 'bottom' },
-        },
-      },
+  if (!labels.length) {
+    selectors.pieStatus.textContent = 'Add expenses to see category breakdown.';
+    if (charts.pie) {
+      charts.pie.destroy();
+      charts.pie = null;
     }
-  );
+    const pieCanvas = document.getElementById('category-pie');
+    if (pieCanvas?.getContext) pieCanvas.getContext('2d').clearRect(0, 0, pieCanvas.width, pieCanvas.height);
+  } else {
+    selectors.pieStatus.textContent = '';
+    ensureChart(
+      'pie',
+      document.getElementById('category-pie'),
+      {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: ['#2e86c1', '#1a5276', '#abebc6', '#e74c3c', '#f2c94c', '#8e44ad'],
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom' },
+          },
+        },
+      }
+    );
+  }
 
   const months = getLastMonths(6);
   const barLabels = months.map((m) => m.label);
   const barData = months.map((m) => sumByMonth(state.data.expenses, m.key));
 
-  ensureChart(
-    'bar',
-    document.getElementById('monthly-bar'),
-    {
-      type: 'bar',
-      data: {
-        labels: barLabels,
-        datasets: [
-          {
-            label: 'Total spent',
-            data: barData,
-            backgroundColor: '#2e86c1',
-            borderRadius: 8,
-          },
-        ],
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true },
-        },
-        plugins: {
-          legend: { display: false },
-        },
-      },
+  if (!barData.some((value) => value > 0)) {
+    selectors.barStatus.textContent = 'Add expenses to see monthly totals.';
+    if (charts.bar) {
+      charts.bar.destroy();
+      charts.bar = null;
     }
-  );
+    const barCanvas = document.getElementById('monthly-bar');
+    if (barCanvas?.getContext) barCanvas.getContext('2d').clearRect(0, 0, barCanvas.width, barCanvas.height);
+  } else {
+    selectors.barStatus.textContent = '';
+    ensureChart(
+      'bar',
+      document.getElementById('monthly-bar'),
+      {
+        type: 'bar',
+        data: {
+          labels: barLabels,
+          datasets: [
+            {
+              label: 'Total spent',
+              data: barData,
+              backgroundColor: '#2e86c1',
+              borderRadius: 8,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true },
+          },
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      }
+    );
+  }
 }
 
 function renderHistory() {
@@ -279,10 +307,12 @@ function renderHistory() {
   selectors.historyEmpty.style.display = 'none';
   items.forEach((item) => {
     const li = document.createElement('li');
-    li.className = 'list-item';
+    li.className = 'list-item fade-in';
     li.innerHTML = `<div><strong>${item.description || item.category}</strong><div class="meta">${formatDate(item.date)} • ${
       item.category
-    }</div></div><div>${formatCurrency(item.amount)}</div>`;
+    }</div></div><div class="list-actions"><span>${formatCurrency(item.amount)}</span><button class="button danger" data-expense-id="${
+      item.id
+    }">Delete</button></div>`;
     selectors.allExpenses.appendChild(li);
   });
 }
@@ -423,6 +453,18 @@ function attachEvents() {
   selectors.filterCategory.addEventListener('change', (event) => {
     state.filters.category = event.target.value;
     renderHistory();
+  });
+  selectors.allExpenses.addEventListener('click', (event) => {
+    const target = event.target;
+    if (target.matches('button[data-expense-id]')) {
+      const id = target.getAttribute('data-expense-id');
+      state.data = deleteExpense(state.data, id);
+      saveData(state.data);
+      renderBudget();
+      renderRecent();
+      renderHistory();
+      renderCharts();
+    }
   });
 }
 

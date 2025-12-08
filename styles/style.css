@@ -264,11 +264,18 @@ main {
   padding: 0.75rem;
   border: 1px dashed var(--border);
   border-radius: 12px;
+  gap: 0.75rem;
 }
 
 .list-item .meta {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.list-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .button {
@@ -290,6 +297,12 @@ main {
   background: rgba(255, 255, 255, 0.7);
   color: var(--text);
   border: 1px solid var(--border);
+}
+
+.button.danger {
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(231, 76, 60, 0.4);
 }
 
 .button:hover {
@@ -423,12 +436,29 @@ input:focus, select:focus {
   box-shadow: var(--shadow);
 }
 
+.chart-card canvas {
+  width: 100%;
+}
+
+.chart-status {
+  margin-top: 0.5rem;
+}
+
 .chart-placeholder {
   margin-top: 1rem;
   padding: 1rem;
   border: 1px dashed var(--border);
   border-radius: 12px;
   color: var(--muted);
+}
+
+.fade-in {
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .advice {
