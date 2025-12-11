@@ -67,6 +67,19 @@ const charts = {
   bar: null,
 };
 
+function parseBudgetInput(value) {
+  if (!value) return 0;
+  const cleaned = value.toString().replace(/[^0-9.]/g, '');
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatBudgetInput(value) {
+  const num = parseBudgetInput(value);
+  if (!num) return '';
+  return formatCurrency(num);
+}
+
 function isRatesFresh(cache) {
   return Boolean(cache?.rates && cache?.ratesFetchedAt && Date.now() - cache.ratesFetchedAt < RATE_TTL_MS);
 }
@@ -334,7 +347,9 @@ function renderConverterResult(output) {
 }
 
 function renderSettings() {
-  selectors.budgetInput.value = state.data.settings.monthlyBudget || '';
+  selectors.budgetInput.value = state.data.settings.monthlyBudget
+    ? formatCurrency(state.data.settings.monthlyBudget)
+    : '';
   selectors.themeToggle.checked = state.data.settings.theme === 'dark';
 }
 
@@ -415,9 +430,10 @@ async function loadAdvice() {
 
 function handleSettingsSubmit(event) {
   event.preventDefault();
-  const budgetValue = selectors.budgetInput.value;
+  const budgetValue = parseBudgetInput(selectors.budgetInput.value);
   state.data = setMonthlyBudget(state.data, budgetValue);
   saveData(state.data);
+  selectors.budgetInput.value = formatBudgetInput(budgetValue);
   selectors.settingsStatus.textContent = 'Settings saved.';
   renderBudget();
 }
@@ -443,6 +459,7 @@ function attachEvents() {
     selectors.expenseForm.reset();
     selectors.settingsForm.reset();
     selectors.expenseDate.value = todayISO();
+    selectors.budgetInput.value = '';
     populateCategories();
     renderFilterOptions();
     updateCurrencyOptions(buildCurrencyCodes(state.data.cache));
@@ -453,6 +470,12 @@ function attachEvents() {
   selectors.filterCategory.addEventListener('change', (event) => {
     state.filters.category = event.target.value;
     renderHistory();
+  });
+  selectors.budgetInput.addEventListener('focus', () => {
+    selectors.budgetInput.value = parseBudgetInput(selectors.budgetInput.value) || '';
+  });
+  selectors.budgetInput.addEventListener('blur', () => {
+    selectors.budgetInput.value = formatBudgetInput(selectors.budgetInput.value);
   });
   selectors.allExpenses.addEventListener('click', (event) => {
     const target = event.target;
