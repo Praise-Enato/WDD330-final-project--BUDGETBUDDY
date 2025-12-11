@@ -90,6 +90,16 @@ p {
   flex-wrap: wrap;
 }
 
+.menu-toggle {
+  display: none;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
 .nav-link {
   border: 1px solid var(--border);
   background: var(--card);
@@ -202,12 +212,27 @@ main {
   gap: 1rem;
 }
 
+.home-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.home-grid > .card {
+  flex: 1 1 280px;
+  height: auto;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 1rem;
   box-shadow: var(--shadow);
+}
+
+.card.tight {
+  padding: 0.9rem 1rem;
 }
 
 .card-head {
@@ -466,6 +491,8 @@ input:focus, select:focus {
 .advice {
   font-size: 1.05rem;
   line-height: 1.6;
+  margin: 0.25rem 0;
+  display: inline-block;
 }
 
 .result {
@@ -487,14 +514,22 @@ input:focus, select:focus {
     align-items: flex-start;
   }
 
+  .menu-toggle {
+    display: block;
+  }
+
   .nav {
     width: 100%;
-    overflow-x: auto;
+    display: none;
+    flex-direction: column;
+  }
+
+  .nav.open {
+    display: flex;
   }
 
   .nav-link {
-    flex: 1;
-    text-align: center;
+    text-align: left;
   }
 
   .filters {
@@ -505,5 +540,9 @@ input:focus, select:focus {
     min-width: 110px;
     padding: 0.5rem 0.6rem;
     font-size: 0.9rem;
+  }
+
+  .home-grid {
+    flex-direction: column;
   }
 }

@@ -67,17 +67,17 @@ const charts = {
   bar: null,
 };
 
-function parseBudgetInput(value) {
+function parseCurrencyInput(value) {
   if (!value) return 0;
-  const cleaned = value.toString().replace(/[^0-9.]/g, '');
-  const parsed = Number.parseFloat(cleaned);
+  const cleaned = value.toString().replace(/[^0-9]/g, '');
+  const parsed = Number.parseInt(cleaned, 10);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatBudgetInput(value) {
-  const num = parseBudgetInput(value);
+function formatCurrencyInput(value) {
+  const num = parseCurrencyInput(value);
   if (!num) return '';
-  return formatCurrency(num);
+  return `$${num.toLocaleString('en-US')}`;
 }
 
 function isRatesFresh(cache) {
@@ -135,6 +135,12 @@ function attachNavigation() {
     el.addEventListener('click', (event) => {
       const target = event.currentTarget.dataset.target;
       if (target) switchView(target);
+      if (window.innerWidth <= 720) {
+        const nav = document.querySelector('.nav');
+        const toggle = document.querySelector('.menu-toggle');
+        nav?.classList.remove('open');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      }
     });
   });
 }
@@ -366,7 +372,7 @@ function handleExpenseSubmit(event) {
   event.preventDefault();
   selectors.expenseStatus.textContent = '';
   const payload = {
-    amount: selectors.expenseAmount.value,
+    amount: parseCurrencyInput(selectors.expenseAmount.value),
     category: selectors.expenseCategory.value,
     description: selectors.expenseDescription.value,
     date: selectors.expenseDate.value,
@@ -430,10 +436,10 @@ async function loadAdvice() {
 
 function handleSettingsSubmit(event) {
   event.preventDefault();
-  const budgetValue = parseBudgetInput(selectors.budgetInput.value);
+  const budgetValue = parseCurrencyInput(selectors.budgetInput.value);
   state.data = setMonthlyBudget(state.data, budgetValue);
   saveData(state.data);
-  selectors.budgetInput.value = formatBudgetInput(budgetValue);
+  selectors.budgetInput.value = formatCurrencyInput(budgetValue);
   selectors.settingsStatus.textContent = 'Settings saved.';
   renderBudget();
 }
@@ -472,16 +478,25 @@ function attachEvents() {
     renderHistory();
   });
   selectors.budgetInput.addEventListener('focus', () => {
-    selectors.budgetInput.value = parseBudgetInput(selectors.budgetInput.value) || '';
+    selectors.budgetInput.value = parseCurrencyInput(selectors.budgetInput.value) || '';
   });
   selectors.budgetInput.addEventListener('blur', () => {
-    selectors.budgetInput.value = formatBudgetInput(selectors.budgetInput.value);
+    selectors.budgetInput.value = formatCurrencyInput(selectors.budgetInput.value);
   });
-  selectors.budgetInput.addEventListener('input', (event) => {
-    const formatted = formatBudgetInput(event.target.value);
-    event.target.value = formatted;
-    const end = event.target.value.length;
-    event.target.setSelectionRange(end, end);
+  const syncFormatted = (inputEl) => {
+    const formatted = formatCurrencyInput(inputEl.value);
+    inputEl.value = formatted;
+    const end = inputEl.value.length;
+    inputEl.setSelectionRange(end, end);
+  };
+
+  selectors.budgetInput.addEventListener('input', () => syncFormatted(selectors.budgetInput));
+  selectors.expenseAmount.addEventListener('input', () => syncFormatted(selectors.expenseAmount));
+  selectors.expenseAmount.addEventListener('focus', () => {
+    selectors.expenseAmount.value = parseCurrencyInput(selectors.expenseAmount.value) || '';
+  });
+  selectors.expenseAmount.addEventListener('blur', () => {
+    syncFormatted(selectors.expenseAmount);
   });
   selectors.allExpenses.addEventListener('click', (event) => {
     const target = event.target;
@@ -495,6 +510,14 @@ function attachEvents() {
       renderCharts();
     }
   });
+  const menuToggle = document.querySelector('.menu-toggle');
+  const nav = document.querySelector('.nav');
+  if (menuToggle && nav) {
+    menuToggle.addEventListener('click', () => {
+      const isOpen = nav.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
 }
 
 function formatDate(value) {
