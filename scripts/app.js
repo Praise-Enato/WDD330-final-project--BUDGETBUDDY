@@ -391,6 +391,7 @@ function handleExpenseSubmit(event) {
   renderBudget();
   renderRecent();
   renderHistory();
+  renderCharts();
 }
 
 async function handleConvert(event) {
