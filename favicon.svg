@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop stop-color="#1a5276" offset="0%"/>
+      <stop stop-color="#2e86c1" offset="100%"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#g)"/>
+  <text x="50%" y="52%" text-anchor="middle" font-family="Poppins, Inter, system-ui, sans-serif" font-size="26" font-weight="700" fill="#ffffff">BB</text>
+</svg>
