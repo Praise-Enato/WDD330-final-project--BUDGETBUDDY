@@ -477,6 +477,12 @@ function attachEvents() {
   selectors.budgetInput.addEventListener('blur', () => {
     selectors.budgetInput.value = formatBudgetInput(selectors.budgetInput.value);
   });
+  selectors.budgetInput.addEventListener('input', (event) => {
+    const formatted = formatBudgetInput(event.target.value);
+    event.target.value = formatted;
+    const end = event.target.value.length;
+    event.target.setSelectionRange(end, end);
+  });
   selectors.allExpenses.addEventListener('click', (event) => {
     const target = event.target;
     if (target.matches('button[data-expense-id]')) {
